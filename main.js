@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 let inputArr = process.argv.slice(2);
 /* slice(2), as The first element will be node , 
 the second element will be the name of the JavaScript file. 
@@ -35,9 +36,10 @@ switch(command){
 
 function treeFn(dirPath){
     // console.log("The tree command implemented for", dirPath);
-    let destPath;
+    // let destPath;
     if(dirPath == undefined){
-        console.log("kindly enter the path");
+        // process.cwd();      //GLOBAL-it will pickup the path, where it is being run
+        treeHelper(process.cwd(), "")
         return;
     }
     else{
@@ -56,21 +58,20 @@ function treeHelper(dirPath, indent){       //empty string `indent` for indentat
     /* 1. We will check whether it is a file or a folder 
     if file -> simply, print its name
     if folder -> check its contents, and then again repeat the same cycle(recursion)*/
-    let obj = fs.lstatSync(dirPath);
-    
-    if(obj.isFile()){
+    let isFile = fs.lstatSync(dirPath).isFile();
+    if (isFile == true) {
         let fileName = path.basename(dirPath);
-        console.log(indent + "|————————" + fileName);
-    }else{
+        console.log(indent + "├──" + fileName);
+    } else{
         //for folder
-        let dirName = path.basename(dirPath);
-        console.log(indent + "‖‖ ‖‖——" + dirName);
+        let dirName = path.basename(dirPath)
+        console.log(indent + "└──" + dirName);
 
         //now taking care of the contents of this folder
-        let children = fs.readdirSync(dirName);
+        let children = fs.readdirSync(dirPath);
         //using recursion for the children
-        for(let i = 0; i < children.length; i++){
-            let childPath = path.join(dirName, children[i]);
+        for (let i = 0; i < children.length; i++) {
+            let childPath = path.join(dirPath, children[i]);
             treeHelper(childPath, indent + "\t");
         }
     }
@@ -84,14 +85,15 @@ function organizeFn(dirPath){
     // 1 ->INPUT -  we'll be given a folder path
     let destPath;
     if(dirPath == undefined){
-        console.log("kindly enter the path");
+        destPath = process.cwd();           //cwd - current working directory
+        // console.log("kindly enter the path");
         return;
     }
     else{
         let doesExist = fs.existsSync(dirPath);
         if(doesExist){
             // 2 -> then, we'll create the organzied _files directory
-            destPath = path.join(dirPath, "Organized_Files");
+            destPath = path.join(dirPath, "organized_Files");
 
             //agar folder pehle se hi bana hua ho, then return, else make the folder
             // if(fs.existsSync(destPath))return;
@@ -120,17 +122,15 @@ function organizeFnHelper(src, dest){
     /* console.log(childNames); -->this will only give us the name of the files,
     but we want the complete path of the files, so as to organize them*/
 
-    for(let i = 0; i < childNames.length; i++){
-        let childAdress = path.join(src, childNames[i]);
-        
-        let obj = fs.lstatSync(childAdress);
-        if(obj.isFile()){
+    for (let i = 0; i < childNames.length; i++) {
+        let childAddress = path.join(src, childNames[i]);
+        let isFile = fs.lstatSync(childAddress).isFile();
+        if (isFile) {
             // console.log(childNames[i]);
             let category = getCategory(childNames[i]);
-            // console.log(`${childNames[i]} belongs to --> ${category}`);
-
-            // 4 -> then copy/cut the files to that organized category inside of any of the category folder
-            sendFiles(childAdress, dest, category);
+            console.log(childNames[i], "belongs to --> ", category);
+            // 4. copy / cut  files to that organized directory inside of any of category folder 
+            sendFiles(childAddress, dest, category);
         }
     }
 
@@ -147,8 +147,8 @@ function sendFiles(srcFilePath, destFolder, category){
     //first we make the directory, then we copy the items there
     let destFilePath = path.join(categoryPath, fileName);
     fs.copyFileSync(srcFilePath, destFilePath);
-    console.log(`${fileName}, copied to ${category}`);
     fs.unlinkSync(srcFilePath);
+    console.log(`${fileName}, copied to ${category}`);
 
 }
 
@@ -170,8 +170,8 @@ function getCategory(name){
 function helpFn(){
     console.log(`
     List of all the help commands:
-            node main.js tree "directory path"
-            node main.js organize "directory path"
-            node main.js help
+            alexa tree - to view the tree structure
+            alexa organize - to oragnize all files into separate folders
+            alexa help
         `);
 }
